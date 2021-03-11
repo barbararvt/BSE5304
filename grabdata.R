@@ -55,9 +55,10 @@ summary(modeldata)
 
 #Saving the functions and build up working "modeldata" dataframe so we can save a package
 
-objects()
-rm(list = objects())
-
+#objects()
+#rm(list = objects())
+#dir.create("~/Week06")
+#setwd("~Week06")
 
 
 if (!require("pacman")) install.packages("pacman")
@@ -98,4 +99,69 @@ slope_sum=summary(terrain(mydem, opt='slope',unit = "radians"))
 # 
 # We are building on our prior lab solutions, need to build out our previous 
 # TMWB model. We will grab functions from the solutions from Week 4’s Lab  
+
+
+modeldata$HillslopeAboveExcess=0
+BasinTMWB=modeldata
+
+BasinTMWB = TMWB_Model(fnc_TMWB = BasinTMWB,fnc_slope=0, 
+                       fnc_aspect=0,func_DAWC=.3,
+                       func_z=500,fnc_fcres=.3)
+
+
+attach(BasinTMWB)
+plot(date,AW)
+plot(dP,Qmm)
+detach(BasinTMWB)
+
+# But, we know that our systems behave differently during snowy winter
+# months, so we will isolate our June ( month>5) - October ( < 11 ) data (_JO)
+#
+BasinTMWB_JO=BasinTMWB[(month(BasinTMWB$date) > 5 
+                        & month(BasinTMWB$date) < 11),]
+attach(BasinTMWB_JO)
+plot(dP,Qmm)
+detach(BasinTMWB_JO)
+
+
+
+#S estimation mm (44mm of water can be stored)
+(1000/85-10)*25.4 
+(1000/50-10)*25.4 
+
+#Testing S estimation 
+attach(BasinTMWB_JO)
+plot(dP,Qmm)
+points(dP,dP^2/(dP+45),col="red")      # S guestimates in bold, curve number of 85
+points(dP,dP^2/(dP+260),col="blue")    # S guestimates in bold, curve number of 50
+
+
+# Build our NSE Function from Lab3
+
+NSE=function(Yobs,Ysim){
+  return(1-sum((Yobs-Ysim)^2, na.rm=TRUE)/sum((Yobs-mean(Yobs, na.rm=TRUE))^2, na.rm=TRUE))
+}
+
+
+# Vary S to maximize NSE using Eq. 4 of Lyon 2004 as our predictor of Q
+#   Qpred=dP^2/(dP+S)
+#
+NSE(Qmm,dP^2/(dP+260)) # how is the NSE for 260
+# [1] 0.02375528
+NSE(Qmm,dP^2/(dP+45))
+#[1] -0.8083051
+
+for (myS in 50:350){
+  print(paste(myS, NSE(Qmm,dP^2/(dP+myS))))
+  
+}
+
+
+
+
+
+
+# Keep iterating until NSE is as high as you can get for your 
+# best estimate to S (Sest)
+
 
