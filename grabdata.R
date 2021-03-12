@@ -157,11 +157,143 @@ for (myS in 50:350){
 }
 
 
+Sest = 157
+
+plot(dP,Qmm)
+points(dP,dP^2/(dP+Sest),col="green")
 
 
 
+nTIclass=5
+VSAsol=data.table(WetClass=seq(from=nTIclass,to=1),
+                  As=seq(1:nTIclass)*(1/nTIclass),Wetfrac=(1/nTIclass))
+VSAsol[,sSratio:=2*(sqrt(1-shift(As))-sqrt(1-As))/Wetfrac-1]
 
-# Keep iterating until NSE is as high as you can get for your 
-# best estimate to S (Sest)
+#
 
 
+VSAsol$sSratio[1]=2*(sqrt(1-0)-sqrt(1-VSAsol$As[1]))/VSAsol$Wetfrac[1]-1
+VSAsol 
+
+
+# Calculate TI Class localized sigma and Curve Number
+#
+VSAsol[,sigma:=Sest*sSratio]
+VSAsol[,CN:=25400/(sigma+254)]
+VSAsol
+plot(VSAsol$As,VSAsol$sigma)
+lines(VSAsol$As,VSAsol$sigma)
+plot(VSAsol$As,VSAsol$CN)
+lines(VSAsol$As,VSAsol$CN)
+
+#_________________________________HW_1______________________________#
+
+TIC01=modeldata
+TIC02=modeldata
+TIC03=modeldata
+TIC04=modeldata
+TIC05=modeldata
+
+# For TIC01 
+TIC01 = CN_Model(fnc_CNModel = TIC01, CNavg=VSAsol$CN[5],
+                 func_DAWC=.3,IaFrac=0.05,
+                 func_z=1000,fnc_fcres=.3)
+
+plot(TIC01$date,TIC01$Qpred,type="l")
+TIC02$HillslopeAboveExcess=TIC01$Qpred 
+
+
+
+# TIC02
+TIC02= CN_Model(fnc_CNModel = TIC02, CNavg=VSAsol$CN[4],
+                 func_DAWC=.3,IaFrac=0.05,
+                 func_z=1000,fnc_fcres=.3)
+
+plot(TIC02$date,TIC02$Qpred,type="l")
+
+TIC03$HillslopeAboveExcess=TIC02$Qpred 
+
+
+
+# TIC03
+TIC03 =CN_Model(fnc_CNModel = TIC03, CNavg=VSAsol$CN[3],
+                func_DAWC=.3,IaFrac=0.05,
+                func_z=1000,fnc_fcres=.3)
+
+plot(TIC03$date,TIC03$Qpred,type="l")
+
+TIC04$HillslopeAboveExcess=TIC03$Qpred 
+
+
+
+# TIC04
+TIC04 = CN_Model(fnc_CNModel = TIC04, CNavg=VSAsol$CN[2],
+                 func_DAWC=.3,IaFrac=0.05,
+                 func_z=1000,fnc_fcres=.3)
+
+TIC04$HillslopeAboveExcess=TIC04$Qpred 
+plot(TIC04$date,TIC04$Qpred,type="l")
+
+
+# TIC05
+TIC05 = CN_Model(fnc_CNModel = TIC05, CNavg=VSAsol$CN[1],
+                 func_DAWC=.3,IaFrac=0.05,
+                 func_z=1000,fnc_fcres=.3)
+
+#Plots
+
+plot(TIC05$date,TIC05$Qpred,type="l", main=myflowgage$gagename, ylab="Q predicted (mm/day)", xlab= "Date")
+lines(TIC04$date, TIC04$Qpred, col="red")
+lines(TIC03$date, TIC03$Qpred, col="blue")
+lines(TIC02$date, TIC02$Qpred, col="green")
+lines(TIC01$date, TIC01$Qpred, col="yellow")
+legend("topleft", c("Qpred 1","Qpred 2","Qpred 3","Qpred 4","Qpred 5"), col = c("black", "red", "blue", "green", "yellow"),
+       lty = 1:1, y.intersp = .5)
+
+
+
+mean(TIC05$Qpred)*365
+mean(TIC04$Qpred)*365
+mean(TIC03$Qpred)*365
+mean(TIC02$Qpred)*365
+mean(TIC01$Qpred)*365
+
+
+
+#_________________________________HW_2______________________________#
+
+
+plot(TIC05$date,TIC05$AW,type="l", main=myflowgage$gagename, ylab="AW (mm/day)", xlab= "Date")
+lines(TIC04$date, TIC04$AW, col="red")
+lines(TIC03$date, TIC03$AW, col="blue")
+lines(TIC02$date, TIC02$AW, col="green")
+lines(TIC01$date, TIC01$AW, col="yellow")
+legend("bottomright", c("AW 1","AW 2","AW 3","AW 4","AW 5"), col = c("black", "red", "blue", "green", "yellow"),
+       lty = 1:1, y.intersp = .4)
+
+mean(TIC05$AW)*365
+mean(TIC04$AW)*365
+mean(TIC03$AW)*365
+mean(TIC02$AW)*365
+mean(TIC01$AW)*365
+
+
+
+#_________________________________HW_3______________________________#
+
+plot(TIC05$date,TIC05$ET,type="l", main=myflowgage$gagename, ylab="ET(mm/day)", xlab= "Date")
+lines(TIC04$date, TIC04$ET, col="red")
+lines(TIC03$date, TIC03$ET, col="blue")
+lines(TIC02$date, TIC02$ET, col="green")
+lines(TIC01$date, TIC01$ET, col="yellow")
+legend("topright", c("ET 1","ET 2","ET 3","ET 4","ET 5"), col = c("black", "red", "blue", "green", "yellow"),
+       lty = 1:1, y.intersp = .2)
+
+
+plot(TIC05$date,cumsum(TIC05$ET),type="l", main=myflowgage$gagename, ylab="Average ET (mm/day)", xlab= "Date")
+lines(TIC04$date, cumsum(TIC04$ET), col="red")
+lines(TIC03$date, cumsum(TIC03$ET), col="blue")
+lines(TIC02$date, cumsum(TIC02$ET), col="green")
+lines(TIC01$date, cumsum(TIC01$ET), col="yellow")
+legend("bottomright", c("ET 1","ET 2","ET 3","ET 4","ET 5"), col = c("black", "red", "blue", "green", "yellow"),
+       lty = 1:1, y.intersp = .4)
